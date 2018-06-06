@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" >
+<link rel="stylesheet" href="/css/profile.css">
+</head>
+<body>
+
+<div class = "navbar">
+	<form action="/" method="get">
+		<button type="submit" style="border:0; background: transparent; position: absolute; top: 7px; left: 10px;">
+			<img src="/img/home.png" width="40px" height="40px" alt="submit" />
+		</button>
+	</form>
+	<form action="/signout" method="get">
+		<button type="submit" style="border:0; background: transparent; position: absolute; top: 8px; left: 70px;">
+			<img src="/img/logout.png" width="40px" height="40px" alt="submit" />
+		</button>
+	</form>
+</div>
+
+<div class="profile-box">
+	<img src="{}" alt="Avatar" class="avatar">
+	<br>
+	<div class="profile-title"> User
+	</div>
+	<br>
+	<div class="profile-message"> {}
+	</div>
+	<br>
+	<div class="profile-title"> Name
+	</div>
+	<br>
+	<div class="profile-message"> {}
+	</div>
+	<br>
+	<div class="profile-title"> Position
+	</div>
+	<br>
+	<div class="profile-message"> {}
+	</div>
+	<br>
+	<div class="profile-title"> Description
+	</div>
+	<br>
+	<div class="profile-message"> {}
+	</div>
+	<br>
+	<div class="profile-title"> Location
+	</div>
+	<br>
+	<div class="profile-message"> {}
+	</div>
+	<br>
+</div>
+
+<div class="chatbox">
+	<div class="chatlogs">
+		<div id="chat">
+			
+		</div>
+	</div>
+	<div class="chat-form">
+		<textarea name="message" form="chatsubmit"></textarea>
+		<form action="/prepMessages" method="post" id="chatsubmit">
+			<button type="submit"> Send </button>
+			<br>
+			<button class="filesubmit" type="submit" id="filesubmit" form="filesubmit"> File </button>
+			<input type="hidden" name="destination" id="destination_chat" value="{}">
+		</form>
+	</div>
+	<form action="/prepFiles" method="post" enctype='multipart/form-data'>
+		<input type="file" name="filename" id="file" accept="image/*"> 
+		<input type="hidden" name="destination" value="{}">
+	</form>
+</div>
+	
+
+<div class="chat-box">
+  <div class="open">  Online Users
+  <div class="box">
+
+	<div id="demo">
+	</div>
+  </div>
+  </div>
+</div>
+
+<script src="/js/profile.js">
+</script>
+
+</body>
+</html>

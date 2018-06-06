@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" >
+<link rel="stylesheet" href="/css/editProfile.css">
+</head>
+<body>
+
+<div class = "navbar">
+	<form action="/" method="get">
+		<button type="submit" style="border:0; background: transparent; position: absolute; top: 7px; left: 10px;">
+			<img src="/img/home.png" width="40px" height="40px" alt="submit" />
+		</button>
+	</form>
+	<form action="/signout" method="get">
+		<button type="submit" style="border:0; background: transparent; position: absolute; top: 8px; left: 70px;">
+			<img src="/img/logout.png" width="40px" height="40px" alt="submit" />
+		</button>
+	</form>
+</div>
+
+<div class="profile-box">
+		<img src="{}" alt="Avatar" class="avatar">
+			<form action="/editProfilePicture" method='post' enctype='multipart/form-data'>
+				<input type="file" name="picture" id="file" accept="image/*"> 
+				<input type="submit" class="profile-button" id="profile" value="Confirm">
+			</form>
+			<form action="/editProfileDetails" method='post' enctype='multipart/form-data'>
+				<br>
+				<div class="profile-title"> User
+				</div>
+				<br>
+				<div class="profile-message"> {}
+				</div>
+				<br>
+				<div class="profile-title"> Name
+				</div>
+				<br>
+				<div class="profile-message"> 
+					<input class="text_input" type="text" name="name" value="{}">
+				</div>
+				<br>
+				<div class="profile-title"> Position
+				</div>
+				<br>
+				<div class="profile-message"> 
+					<input class="text_input" type="text" name="position" value="{}">
+				</div>
+				<br>
+				<div class="profile-title"> Description
+				</div>
+				<br>
+				<div class="profile-message"> 
+					<input class="text_input" type="text" name="description" value="{}">
+				</div>
+				<br>
+				<div class="profile-title"> Location
+				</div>
+				<br>
+				<div class="profile-message"> 
+					<input class="text_input" type="text" name="location" value="{}">
+				</div>
+				<br>
+				<input type="submit" class="edit-button" value="Confirm">
+			</form>
+</div>
+
+<div class="chat-box">
+  <div class="open">  Online Users
+	<div class="box">
+		<div id="demo">
+		</div>
+	</div>
+  </div>
+</div>
+
+<script src="/js/editProfile.js">
+</script>
+	
+</body>
+</html>
