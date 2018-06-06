@@ -703,9 +703,9 @@ class MainApp(object):
         param = {'username' : username,
                 'password' : encrypt.hexdigest(),
                 'location' : location,
-                #'ip' : ipv4,
+                'ip' : ipv4,
                 #If at home
-                'ip' : "203.173.216.225",
+                #'ip' : "203.173.216.225",
                 'port' : listen_port,
                 'enc' : 0}
         data = urllib.urlencode(param)
