@@ -4,7 +4,19 @@ import json
 import urllib2
 import time
 
+
+""" databaseControl.py
+
+    COMPSYS302 - Software Design
+    Author: Peter Joe (pjoe652@auckland.ac.nz)
+    Last Edited: 7/06/2018
+
+    This controls all interactions with the database, if a certain command is needed it
+    is called here
+"""
+
 def createTable():
+    '''Creates a database if one doesn't exist'''
     conn = sqlite3.connect('userDatabase.db')
     c = conn.cursor()
 
@@ -47,7 +59,7 @@ def createTable():
                 time TEXT
                 )""")
 
-    
+    #Gets all users from Login server
     link = "http://cs302.pythonanywhere.com/listUsers"
     f = urllib.urlopen(link)
     myfile = f.read()
@@ -58,8 +70,9 @@ def createTable():
     conn.commit()
     conn.close()
 
-#Inserts authenticator code
+
 def insertCode(username, code):
+    '''Inserts authenticator code into database'''
     conn = sqlite3.connect('userDatabase.db')
     c = conn.cursor()
 
@@ -68,8 +81,9 @@ def insertCode(username, code):
     conn.commit()
     conn.close()
 
+
 def verifyCode(username, code):
-    
+    '''Verifies input code to stored code'''
     conn = sqlite3.connect('userDatabase.db')
     c = conn.cursor()
 
@@ -80,8 +94,9 @@ def verifyCode(username, code):
     else:
         return False
 
-#Automatically updates users
+
 def updateOnlineUsers(username, password):
+    '''Automatically updates users'''
     conn = sqlite3.connect('userDatabase.db')
     c = conn.cursor()
     
@@ -121,8 +136,9 @@ def updateOnlineUsers(username, password):
             conn.commit()
     conn.close()
 
-#Inserts new message into database
+
 def updateNewMessages(sender, destination, message, stamp_time):
+    '''Inserts new message into database'''
     conn = sqlite3.connect('userDatabase.db')
     c = conn.cursor()
 
@@ -138,8 +154,9 @@ def updateNewMessages(sender, destination, message, stamp_time):
     conn.commit()
     conn.close()
 
-#Inserts new message into database
+
 def updateNewFile(sender, destination, base64_file, filename, content_type, stamp_time):
+    '''Inserts new file into database'''
     conn = sqlite3.connect('userDatabase.db')
     c = conn.cursor()
 
@@ -149,14 +166,15 @@ def updateNewFile(sender, destination, base64_file, filename, content_type, stam
 
     fileDetails = [destination, base64_file, filename, content_type, sender, stamp_time]
 
-    #Insert message into database
+    #Insert file into database
     c.execute("INSERT INTO messages ('destination', 'file', 'filename', 'content_type', 'sender', 'time') VALUES (?,?,?,?,?,?)", fileDetails)
 
     conn.commit()
     conn.close()
 
-#Updates profile
+
 def updateProfileDetails(profile_username, last_updated, fullname, position, description, location):
+    '''Updates profile in database'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
@@ -167,8 +185,9 @@ def updateProfileDetails(profile_username, last_updated, fullname, position, des
     conn.commit()
     conn.close()
 
-#Updates profile picture
+
 def updateProfilePicture(profile_username, last_updated, picture):
+    '''Updates profile picture in database'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
@@ -179,8 +198,8 @@ def updateProfilePicture(profile_username, last_updated, picture):
     conn.close()
 
 
-#Returns 0 if not online, return 1 if online
 def checkUserExists(user):
+    '''Returns 0 if not online, return 1 if online'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
@@ -190,8 +209,9 @@ def checkUserExists(user):
     conn.close()
     return values[0]
     
-#Get IP and Port of select user
+
 def getIPPort(user):
+    '''Get IP and Port of select user'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
     
@@ -201,8 +221,9 @@ def getIPPort(user):
     ipport = [values[1], values[4]]
     return ipport
 
-#Returns messages between sender and destination
+
 def getMessage(sender, destination):
+    '''Returns messages between sender and destination'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
@@ -216,8 +237,9 @@ def getMessage(sender, destination):
 
     return message_log
 
-#Returns all users
+
 def getAllUsers():
+    '''Returns all users from database'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
@@ -228,8 +250,9 @@ def getAllUsers():
         all_users.append(str(users[0]))
     return all_users
 
-#Return all online users
+
 def getOnlineUsers():
+    '''Return all online users'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
@@ -240,8 +263,9 @@ def getOnlineUsers():
         online_users.append(str(users[0]))
     return online_users
 
-#Returns all offline users
+
 def getOfflineUsers():
+    '''Returns all offline users'''
 
     offline_users = getAllUsers()
 
@@ -252,8 +276,9 @@ def getOfflineUsers():
 
     return offline_users
 
-#Return profile of user in local database
+
 def getProfile(username):
+    '''Return profile of user in local database'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
@@ -263,8 +288,9 @@ def getProfile(username):
 
     return value
 
-#Returns profile of user from another database
+
 def updateUserProfile(username, sender):
+    '''Returns profile of user from another database'''
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
@@ -283,6 +309,7 @@ def updateUserProfile(username, sender):
         the_page = response.read()
         extracted = json.loads(the_page)
 
+        #Extracts information
         last_updated = str(extracted["lastUpdated"])
         fullname = str(extracted["fullname"])
         position = str(extracted["position"])
@@ -290,6 +317,7 @@ def updateUserProfile(username, sender):
         location = str(extracted["location"])
         picture = str(extracted["picture"])
 
+        #Updates user profile
         c.execute("""UPDATE user_profile SET last_updated = ?, full_name = ?,
                 position = ?, description = ?, location = ?, picture = ?
                 WHERE username =? """, (last_updated, fullname, position, description,
