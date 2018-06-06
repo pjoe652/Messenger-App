@@ -240,15 +240,16 @@ class MainApp(object):
                 profile_pic = "/img/unknown.png"
             else:
                 profile_pic = profile_user[6]
-            Page = open("Profile.html").read().format(profile_pic,profile_user[0], profile_user[2], profile_user[3], profile_user[4],
-                                                      profile_user[5], destination, destination)
+
+            Page = open("profile.html").read().format(profile_pic,profile_user[0], profile_user[2].replace("<", "_"), profile_user[3].replace("<", "_"), 
+							profile_user[4].replace("<", "_"),profile_user[5].replace("<", "_"), destination, destination)
             return Page
         except KeyError:
             self.log_error("KeyError within profile")
             raise cherrypy.HTTPRedirect('/')
-        except:
-            self.log_error("Error within profile")
-            raise cherrypy.HTTPRedirect('/')
+        #except:
+            #self.log_error("Error within profile")
+            #raise cherrypy.HTTPRedirect('/')
 
     
     @cherrypy.expose
@@ -345,6 +346,7 @@ class MainApp(object):
             profile_user = databaseControl.getProfile(request_profile['profile_username'])
             ip = databaseControl.getIPPort(request_profile['profile_username'])
             abso_pic = "http://{}:{}{}".format(ip[0], listen_port, profile_user[6])
+	    #abso_pic = profile_user[6]
             profile_dict = {'lastUpdated' : profile_user[1], 'fullname' : profile_user[2], 'position' : profile_user[3], 'description' : profile_user[4],
                             'location' : profile_user[5], 'picture' : abso_pic}
             profile_dict = json.dumps(profile_dict)

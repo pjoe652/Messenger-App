@@ -12,15 +12,15 @@ function loadOnline() {
 	xhttp.send(null); 
 }
 
-document.getElementById("profile").disabled = true;
+//document.getElementById("profile").disabled = true;
 
-var uploadField = document.getElementById("file");
+//var uploadField = document.getElementById("file");
 
-uploadField.onchange = function() {
-	document.getElementById("profile").disabled = false;
-    document.getElementById("profile").style.cursor = "pointer";
-	document.getElementById("profile").style.opacity = "1";
-};
+//uploadField.onchange = function() {
+//	document.getElementById("profile").disabled = false;
+//    document.getElementById("profile").style.cursor = "pointer";
+//	document.getElementById("profile").style.opacity = "1";
+//};
 
 var uploadField = document.getElementById("file");
 uploadField.onchange = function() {
