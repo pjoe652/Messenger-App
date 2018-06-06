@@ -162,10 +162,7 @@ print verify'''
 '''code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
 print code'''
 
-def log_error(error):
-    timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-    with open('errorlog.txt', 'a+') as log:
-        log.write(timestamp + ":" + error + "\n")
+test = "<><><><>"
+test.replace("<", "_")
+print test
 
-log_error("hello")
-log_error("test")

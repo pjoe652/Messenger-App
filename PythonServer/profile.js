@@ -24,7 +24,22 @@ function loadChat() {
 	};
 	var param = document.getElementById('destination_chat').value;
 	xhttp.open("GET", "updateChat?destination=" + param, true);
-	xhttp.timeout = 8000;
+	xhttp.timeout = 2000;
+	xhttp.send(); 
+}
+
+function loadStatus() {
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+	if (this.readyState == 4 && this.status == 200) {
+		var obj = JSON.parse(this.response)
+		var obj2 = JSON.parse(obj)
+		document.getElementById("status").innerHTML = obj2.data;
+		}
+	};
+	var param = document.getElementById('destination_chat').value;
+	xhttp.open("GET", "updateStatus?destination=" + param, true);
+	xhttp.timeout = 2000;
 	xhttp.send(); 
 }
 
@@ -36,15 +51,21 @@ uploadField.onchange = function() {
     };
 };
 
-document.getElementById("filesubmit").disabled = true;
+document.getElementById("filebutton").disabled = true;
 var uploadField = document.getElementById("file");
 uploadField.onchange = function() {
-	document.getElementById("filesubmit").disabled = false;
-    document.getElementById("filesubmit").style.cursor = "pointer";
-	document.getElementById("filesubmit").style.opacity = "1";
+	document.getElementById("filebutton").disabled = false;
+    document.getElementById("filebutton").style.cursor = "pointer";
+	document.getElementById("filebutton").style.opacity = "1";
 };
 
-var myVar2 = setInterval(loadChat, 8000);
+loadStatus()
+loadChat()
+loadOnline()
+
+var myVar2 = setInterval(loadStatus, 2000);
+
+var myVar2 = setInterval(loadChat, 2000);
 
 var myVar = setInterval(loadOnline, 8000);
   

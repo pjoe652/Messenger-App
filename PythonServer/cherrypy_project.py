@@ -35,7 +35,10 @@ import string
 # The address we listen for connections on
 listen_ip = "0.0.0.0"
 listen_port = 10002
-ipv4 = socket.gethostbyname(socket.gethostname()) 
+ipv4 = socket.gethostbyname(socket.gethostname())
+
+global logged_in
+logged_in = False
 
 class MainApp(object): 
 
@@ -45,7 +48,8 @@ class MainApp(object):
                   'tools.encode.encoding': 'utf-8',
                   'tools.sessions.on' : 'True',
                  }
-
+    
+    # Logs errors into errorlog.txt 
     def log_error(self, error):
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         with open('errorlog.txt', 'a+') as log:
@@ -55,7 +59,7 @@ class MainApp(object):
     @cherrypy.expose
     def default(self, *args, **kwargs): 
         """The default page, given when we don't recognise where the request is for."""
-        Page = "I don't know where you're trying to go, so have a 404 Error."
+        Page = open("404.html")
         cherrypy.response.status = 404
         return Page
 
@@ -80,12 +84,12 @@ class MainApp(object):
             raise cherrypy.HTTPRedirect('/login')
         return Page
 
-    #Ping
+    # Ping to show that server can be reached
     @cherrypy.expose
     def ping(self, sender):
         return "0"
 
-    # Updates online users 
+    # Updates online users via outputting details as JSON
     @cherrypy.tools.json_out()
     @cherrypy.expose
     def storeUsers(self):
@@ -115,7 +119,25 @@ class MainApp(object):
         
         return online_dict
 
-    # Updates chat
+    # Updates user chat status via outputting details as JSON
+    @cherrypy.tools.json_out()
+    @cherrypy.expose
+    def updateStatus(self, destination):
+        if (databaseControl.checkUserExists(destination) == 1):
+            online_bar = "<center>"
+            online_bar += '<div class="online_tag">{} is online <span class="tag_online_dot"></span></div>'.format(destination)
+            online_bar += '</center>'
+        else:
+            online_bar = "<center>"
+            online_bar += '<div class="online_tag">{} is offline <span class="tag_offline_dot"></span></div>'.format(destination)
+            online_bar += '</center>'
+
+        status_dict = {"data" : online_bar}
+        status_dict = json.dumps(status_dict)
+
+        return status_dict
+
+    # Updates chat via outputting details as JSON
     @cherrypy.tools.json_out()
     @cherrypy.expose
     def updateChat(self, destination):
@@ -199,9 +221,9 @@ class MainApp(object):
     # edit profile page. The user will also be able to update their
     # profile details such as information displayed or profile picture
 
+    # Displays destination's profile page
     @cherrypy.expose
     def profile(self, destination):
-
         try:
             username = cherrypy.session['username']
             profile_user = databaseControl.getProfile(destination)
@@ -209,7 +231,6 @@ class MainApp(object):
                 profile_pic = "/img/unknown.png"
             else:
                 profile_pic = profile_user[6]
-
             Page = open("Profile.html").read().format(profile_pic,profile_user[0], profile_user[2], profile_user[3], profile_user[4],
                                                       profile_user[5], destination, destination)
             return Page
@@ -219,8 +240,15 @@ class MainApp(object):
         except:
             self.log_error("Error within profile")
             raise cherrypy.HTTPRedirect('/')
-            
 
+    #Check if another user is logged in
+    def check_login(self):
+        if (logged_in == False):
+            return False;
+        else:
+            return True;
+
+    # Gets destination profile details
     @cherrypy.expose
     def getProfileInfo(self, destination):
         try:
@@ -229,8 +257,9 @@ class MainApp(object):
         except urllib2.URLError, e:
             self.log_error("URLError within getProfileInfo")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
-        except:
-            self.log_error("Error within getProfileInfo")
+        except Exception as e:
+            print e
+            #self.log_error(e + "within prepMessages")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         
 
@@ -261,6 +290,10 @@ class MainApp(object):
         try:
             profile_user = databaseControl.getProfile(cherrypy.session['username'])
             last_updated = time.time()
+            name = name.replace("<", "_")
+            position = position.replace("<", "_")
+            description = description.replace("<", "_")
+            location = location.replace("<", "_")
             #cwd = os.getcwd()
             databaseControl.updateProfileDetails(cherrypy.session['username'], last_updated, name, position, description, location)
             raise cherrypy.HTTPRedirect('/')
@@ -314,13 +347,12 @@ class MainApp(object):
         except:
             self.log_error("Error within editProfilePage")
             raise cherrypy.HTTPRedirect('/')
-        
-
-        
             
     # Prepares messages to be sent as JSON
     @cherrypy.expose
     def prepMessages(self, destination, message):
+
+        message.replace("<", "_")
         Page = "Error: </br>"
         stamp = time.time()
         dict_output = {'sender': cherrypy.session['username'], 'destination': destination, 'message':message, 'stamp': str(stamp),
@@ -329,14 +361,15 @@ class MainApp(object):
         #Should ping
         try:
             IPPort = databaseControl.getIPPort(destination)
-            ping = "http://{}:{}/ping?sender={}".format(IPPort[0], IPPort[1], sender)
+            ping = "http://{}:{}/ping?sender={}".format(IPPort[0], IPPort[1], cherrypy.session['username'])
             response = urllib2.urlopen(ping, timeout = 1)
             url_message = "http://{}:{}/receiveMessage".format(IPPort[0], IPPort[1])
             req = urllib2.Request(url_message, json.dumps(dict_output), {'Content-Type':'application/json'})
             response = urllib2.urlopen(req, timeout = 1)
-            databaseControl.updateNewMessages(sender, destination, message, stamp)
+            databaseControl.updateNewMessages(cherrypy.session['username'], destination, message, stamp)
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except urllib2.URLError, e:
+            print e
             self.log_error("urllib2.URLError within prepMessages")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except urllib2.HTTPError, e:
@@ -350,7 +383,7 @@ class MainApp(object):
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except:
             self.log_error("Error within prepMessages")
-            raise cherrypy.HTTPRedirect('/')
+            raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
 
     # Prepares files to be sent as JSON
     @cherrypy.expose
@@ -376,12 +409,12 @@ class MainApp(object):
         #Should ping
         try:
             IPPort = databaseControl.getIPPort(destination)
-            ping = "http://{}:{}/ping?sender={}".format(IPPort[0], IPPort[1], sender)
+            ping = "http://{}:{}/ping?sender={}".format(IPPort[0], IPPort[1], cherrypy.session['username'])
             response = urllib2.urlopen(ping, timeout = 1)
             url_message = "http://{}:{}/receiveFile".format(IPPort[0], IPPort[1])
             req = urllib2.Request(url_message, json.dumps(dict_output), {'Content-Type':'application/json'})
             response = urllib2.urlopen(req, timeout = 1)
-            databaseControl.updateNewFile(sender, destination, base64_file, file_name, content_type, stamp)
+            databaseControl.updateNewFile(cherrypy.session['username'], destination, base64_file, file_name, content_type, stamp)
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except urllib2.URLError, e:
             self.log_error("urllib2.URLError within prepFiles")
@@ -395,16 +428,21 @@ class MainApp(object):
         except KeyError:
             self.log_error("KeyError within prepFiles")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
-        except:
-            self.log_error("Error within prepFiles")
-            raise cherrypy.HTTPRedirect('/')
-        
+        #except Exception as e:
+            #print e
+            #self.log_error("Error within prepFiles")
+            #raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
+
+
+    # Receives message JSON and saves into database
     @cherrypy.expose
     @cherrypy.tools.json_in() 
     def receiveMessage(self):
-        
         try:
-            messages = cherrypy.request.json 
+            messages = cherrypy.request.json
+            sender = messages['sender'].replace("<", "_")
+            destination = messages['destination'].replace("<", "_")
+            message = messages['message'].replace("<", "_")
             databaseControl.updateNewMessages(messages['sender'], messages['destination'], messages['message'], messages['stamp'])
             return "0"
         except AttributeError:
@@ -417,7 +455,7 @@ class MainApp(object):
             self.log_error("Error within receiveMessage")
             raise cherrypy.HTTPRedirect('/')
             
-    
+    # Receives file JSON and saves into database
     @cherrypy.expose
     @cherrypy.tools.json_in() 
     def receiveFile(self):
@@ -434,7 +472,8 @@ class MainApp(object):
         except:
             self.log_error("Error within receiveFile")
             raise cherrypy.HTTPRedirect('/')
-    
+
+    # Opens login html page
     @cherrypy.expose
     def login(self):
         Page = open("login.html") 
@@ -494,8 +533,9 @@ class MainApp(object):
             self.log_error("Error within img")
             raise cherrypy.HTTPRedirect('/')
 
-    '''This section operates the continuous login'''
+    '''This section operates the continuous login with threading'''
 
+     #Continuously runs login
     def continuousLogin(self, username, password, location, stop_event):
         while not stop_event.is_set():
             try:
@@ -503,7 +543,8 @@ class MainApp(object):
                 self.successfulLogin(username, password, location)
             finally:
                 time.sleep(60)
-
+                
+    #Creates thread
     def thread_start(self, param):
         global stop_event
         stop_event = threading.Event()
@@ -512,42 +553,72 @@ class MainApp(object):
         location = param[2]
         p = thread.start_new_thread(self.continuousLogin, (username, password, location, stop_event))
 
+    #Stops threads on request
     def thread_stop(self):
         stop_event.set()
         
     # LOGGING IN AND OUT
     @cherrypy.expose
     def signin(self, username=None, password=None, location=None):
-        """Check their name and password and send them either to the main page, or back to the main login screen."""
-        cherrypy.session['temp_password'] = password
-        cherrypy.session['temp_location'] = location
-        cherrypy.session['sent_email'] = 0
-        cherrypy.session['sent_email'] = False
-        self.authen_mail(username)
-        #error = self.successfulLogin(username,password,location)
-        #if (error == "0"):
-        databaseControl.createTable()
-        self.authen_mail(username)
-        raise cherrypy.HTTPRedirect('/authenticator?username={}'.format(username))
-        #else:
-        #    raise cherrypy.HTTPRedirect('/login')
+        if self.check_login() == True:
+            raise cherrypy.HTTPRedirect('/login')
+        else:
+            """Check their name and password and send them either to the main page, or back to the main login screen."""
+            username = username.replace("<", "_")
+            password = password.replace("<", "_")
+            #self.authen_mail(username)
+            cherrypy.session['temp_password'] = password
+            cherrypy.session['temp_location'] = location
+            cherrypy.session['sent_email'] = 0
+            cherrypy.session['sent_email'] = False
+            error = self.successfulLogin(username,password,location)
+            if (error == "0"):
+                self.logoff(username, password)
+                databaseControl.createTable()
+                self.authen_mail(username)
+                raise cherrypy.HTTPRedirect('/authenticator?username={}'.format(username))
+            else:
+                raise cherrypy.HTTPRedirect('/login')
 
     #Signs out user and stops auto relogging
     @cherrypy.expose
     def signout(self):
         """Logs the current user out, expires their session"""
-        username = cherrypy.session.get('username')
-        if (username == None):
-            pass
-        else:
-            cherrypy.lib.sessions.expire()
-            self.thread_stop()
-        raise cherrypy.HTTPRedirect('/')
+        try:
+            username = cherrypy.session.get('username')
+            if (username == None):
+                pass
+            else:
+                self.logoff(cherrypy.session['username'], cherrypy.session['username'])
+                cherrypy.lib.sessions.expire()
+                logged_in = False
+                self.thread_stop()
+            raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within receiveMessage")
+            raise cherrypy.HTTPRedirect('/')
+
+    #Signs user off login server
+    def logoff(self, username, password):
+        url = "https://cs302.pythonanywhere.com/logoff"
+        
+        encrypt = hashlib.sha256(str(password) + str(username))
+        param = {'username' : username,
+                'password' : encrypt.hexdigest(),
+                 'enc' : 0}
+        
+        encrypt = hashlib.sha256(str(password) + str(username))
+        data = urllib.urlencode(param)
+        req = urllib2.Request(url, data)
+        response = urllib2.urlopen(req)
+        the_page = response.read()
+        return the_page[0]
+        
 
     #Returns authenticator page after login
     @cherrypy.expose
     def authenticator(self, username):
-        Page = open("authenticator.html").read().format(username)
+        Page = open("authenticator.html").read().format(username.replace("<", "_"))
         return Page
     
     #Sends authentication mail to user
@@ -567,20 +638,25 @@ class MainApp(object):
     #Compares input code with code in database
     @cherrypy.expose
     def verify_code(self, username, code):
-        if databaseControl.verifyCode(username, code) == True:
-            error = self.successfulLogin(username, cherrypy.session['temp_password'], cherrypy.session['temp_location'])
-            if (error == "0"):
-                cherrypy.session['username'] = username;
-                cherrypy.session['password'] = cherrypy.session['temp_password'];
-                cherrypy.session['location'] = cherrypy.session['temp_location'];
-                params = [cherrypy.session['username'], cherrypy.session['password'], cherrypy.session['location']]
-                self.thread_start(params)
-                raise cherrypy.HTTPRedirect('/')
-            else:
-                raise cherrypy.HTTPRedirect('/login')
+        try:
+            if databaseControl.verifyCode(username, code) == True:
+                error = self.successfulLogin(username, cherrypy.session['temp_password'], cherrypy.session['temp_location'])
+                if (error == "0"):
+                    cherrypy.session['username'] = username.replace("<", "_");
+                    cherrypy.session['password'] = cherrypy.session['temp_password'];
+                    cherrypy.session['location'] = cherrypy.session['temp_location'];
+                    params = [cherrypy.session['username'], cherrypy.session['password'], cherrypy.session['location']]
+                    self.thread_start(params)
+                    logged_in = True
+                    raise cherrypy.HTTPRedirect('/')
+                else:
+                    raise cherrypy.HTTPRedirect('/login')
 
-        else:
-            raise cherrypy.HTTPRedirect('/authenticator?username={}'.format(username))
+            else:
+                raise cherrypy.HTTPRedirect('/authenticator?username={}'.format(username))
+        except KeyError:
+            self.log_error("KeyError within verify_code")
+            raise cherrypy.HTTPRedirect('/login')
             
     #Connects to the Login Server to report user has logged in
     def successfulLogin(self, username, password, location): 

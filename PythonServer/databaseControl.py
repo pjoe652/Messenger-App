@@ -53,8 +53,8 @@ def createTable():
     myfile = f.read()
     users = myfile.split(',')
     for user in users:
-        c.execute("INSERT OR IGNORE INTO user_profile (username) VALUES ('{}')".format(user))
-        c.execute("INSERT OR IGNORE INTO users (username) VALUES ('{}')".format(user))
+        c.execute("INSERT OR IGNORE INTO user_profile (username) VALUES (?)", (user,))
+        c.execute("INSERT OR IGNORE INTO users (username) VALUES (?)", (user,))
     conn.commit()
     conn.close()
 
@@ -63,7 +63,7 @@ def insertCode(username, code):
     conn = sqlite3.connect('userDatabase.db')
     c = conn.cursor()
 
-    c.execute("UPDATE users SET code='{}' WHERE username='{}'".format(code, username))
+    c.execute("UPDATE users SET code=? WHERE username=?", (code, username))
 
     conn.commit()
     conn.close()
@@ -73,7 +73,7 @@ def verifyCode(username, code):
     conn = sqlite3.connect('userDatabase.db')
     c = conn.cursor()
 
-    c.execute("SELECT code FROM users WHERE username='{}'".format(username))
+    c.execute("SELECT code FROM users WHERE username=?", (username,))
     value = c.fetchone()
     if (code == value[0]):
         return True
@@ -160,12 +160,9 @@ def updateProfileDetails(profile_username, last_updated, fullname, position, des
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
-    #c.execute("DELETE FROM user_profile WHERE username = '{}'".format(profile_username))
-    #c.execute("INSERT INTO user_profile VALUES (?,?,?,?,?,?)", profile)
-
-    c.execute("""UPDATE user_profile SET last_updated = '{}', full_name = "{}",
-                position = "{}", description = "{}", location = "{}"
-                WHERE username ='{}' """.format(last_updated, fullname, position, description, location, profile_username))
+    c.execute("""UPDATE user_profile SET last_updated = ?, full_name = ?,
+                position = ?, description = ?, location = ?
+                WHERE username =? """, (last_updated, fullname, position, description, location, profile_username))
 
     conn.commit()
     conn.close()
@@ -175,8 +172,8 @@ def updateProfilePicture(profile_username, last_updated, picture):
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
-    c.execute("""UPDATE user_profile SET last_updated = '{}', picture = '{}'
-                WHERE username ='{}'""".format(last_updated, picture, profile_username))
+    c.execute("""UPDATE user_profile SET last_updated = ?, picture = ?
+                WHERE username =?""", (last_updated, picture, profile_username))
 
     conn.commit()
     conn.close()
@@ -187,7 +184,7 @@ def checkUserExists(user):
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
-    c.execute("SELECT EXISTS(SELECT 1 FROM online_users WHERE username = '{}' LIMIT 1)".format(user))
+    c.execute("SELECT EXISTS(SELECT 1 FROM online_users WHERE username = ? LIMIT 1)", (user,))
 
     values = c.fetchone()
     conn.close()
@@ -198,7 +195,7 @@ def getIPPort(user):
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
     
-    c.execute("SELECT * FROM online_users WHERE username = '{}'".format(user))
+    c.execute("SELECT * FROM online_users WHERE username = ?", (user,))
     values = c.fetchone()
 
     ipport = [values[1], values[4]]
@@ -209,7 +206,7 @@ def getMessage(sender, destination):
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
-    c.execute("SELECT * FROM messages WHERE (destination = '{}' AND sender = '{}') OR (destination = '{}' AND sender = '{}')".format(destination, sender, sender, destination))
+    c.execute("SELECT * FROM messages WHERE (destination = ? AND sender = ?) OR (destination = ? AND sender = ?)", (destination, sender, sender, destination))
     values = c.fetchall()
     message_log = []
     for message in values:
@@ -260,7 +257,7 @@ def getProfile(username):
     conn = sqlite3.connect("userDatabase.db")
     c = conn.cursor()
 
-    c.execute("SELECT * FROM  user_profile WHERE username = '{}'".format(username))
+    c.execute("SELECT * FROM  user_profile WHERE username = ?", (username,))
     value = c.fetchone()
 
 
@@ -293,9 +290,9 @@ def updateUserProfile(username, sender):
         location = str(extracted["location"])
         picture = str(extracted["picture"])
 
-        c.execute("""UPDATE user_profile SET last_updated = '{}', full_name = "{}",
-                position = "{}", description = "{}", location = "{}", picture = "{}"
-                WHERE username ='{}' """.format(last_updated, fullname, position, description,
+        c.execute("""UPDATE user_profile SET last_updated = ?, full_name = ?,
+                position = ?, description = ?, location = ?, picture = ?
+                WHERE username =? """, (last_updated, fullname, position, description,
                                                 location, picture, username))
         conn.commit()
         conn.close()

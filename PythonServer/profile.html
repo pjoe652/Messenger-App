@@ -56,6 +56,9 @@
 </div>
 
 <div class="chatbox">
+	<div id="status">
+	</div>
+	
 	<div class="chatlogs">
 		<div id="chat">
 			
@@ -66,11 +69,11 @@
 		<form action="/prepMessages" method="post" id="chatsubmit">
 			<button type="submit"> Send </button>
 			<br>
-			<button class="filesubmit" type="submit" id="filesubmit" form="filesubmit"> File </button>
+			<button class="filesubmit" type="submit" id="filebutton" form="filesend"> File </button>
 			<input type="hidden" name="destination" id="destination_chat" value="{}">
 		</form>
 	</div>
-	<form action="/prepFiles" method="post" enctype='multipart/form-data'>
+	<form action="/prepFiles" method="post" id = "filesend" enctype='multipart/form-data'>
 		<input type="file" name="filename" id="file" accept="image/*"> 
 		<input type="hidden" name="destination" value="{}">
 	</form>

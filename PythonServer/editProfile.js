@@ -30,5 +30,8 @@ uploadField.onchange = function() {
     };
 };
 
+
+loadOnline()
+
 var myVar = setInterval(loadOnline, 8000);
   

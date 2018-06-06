@@ -13,5 +13,7 @@ function loadOnline() {
 	xhttp.send(null); 
 }
 
+loadOnline()
+
 var myVar = setInterval(loadOnline, 8000);
 
