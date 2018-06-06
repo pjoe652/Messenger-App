@@ -9,9 +9,9 @@ function loadOnline() {
 		}
 	};
 	xhttp.open("GET", "storeUsers", true);
-	xhttp.timeout = 5000;
+	xhttp.timeout = 8000;
 	xhttp.send(null); 
 }
 
-var myVar = setInterval(loadOnline, 5000);
+var myVar = setInterval(loadOnline, 8000);
 

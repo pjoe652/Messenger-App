@@ -8,7 +8,7 @@ function loadOnline() {
 		}
 	};
 	xhttp.open("GET", "storeUsers", true);
-	xhttp.timeout = 5000;
+	xhttp.timeout = 8000;
 	xhttp.send(null); 
 }
 
@@ -22,5 +22,5 @@ uploadField.onchange = function() {
 	document.getElementById("profile").style.opacity = "1";
 };
 
-var myVar = setInterval(loadOnline, 5000);
+var myVar = setInterval(loadOnline, 8000);
   

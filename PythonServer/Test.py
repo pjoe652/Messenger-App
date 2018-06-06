@@ -10,6 +10,8 @@ import hashlib
 import threading
 import thread
 import time
+import random
+import string
 
 cwd = os.getcwd()
 cwd += "\files"
@@ -142,27 +144,20 @@ t.start()
 time.sleep(50)
 t.cancel()'''
 
-def continuousLogin(username, password, location, stop_event):
-    while not stop_event.is_set():
-        try:
-            self.successfulLogin(username, password, location)
-        finally:
-            time.sleep(4)
+'''def verifyCode(username, code):
+    
+    conn = sqlite3.connect('userDatabase.db')
+    c = conn.cursor()
 
-def start():
-    global stop_event
-    stop_event = threading.Event()
-    username = "pjoe652"
-    password = 'fictionpack'
-    location = '2'
-    p = thread.start_new_thread(continuousLogin, (username, password, location, stop_event))
+    c.execute("SELECT code FROM users WHERE username='{}'".format(username))
+    value = c.fetchone()
+    if (code == value[0]):
+        return True
+    else:
+        return False
 
-def stop():
-    time.sleep(20)
-    stop_event.set()
+verify = verifyCode("pjoe652", "testtest")
+print verify'''
 
-start()
-stop()
-time.sleep(5)
-start()
-stop()
+code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+print code

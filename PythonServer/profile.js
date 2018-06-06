@@ -9,7 +9,7 @@ function loadOnline() {
 		}
 	};
 	xhttp.open("GET", "storeUsers", true);
-	xhttp.timeout = 5000;
+	xhttp.timeout = 8000;
 	xhttp.send(null); 
 }
 
@@ -24,7 +24,7 @@ function loadChat() {
 	};
 	var param = document.getElementById('destination_chat').value;
 	xhttp.open("GET", "updateChat?destination=" + param, true);
-	xhttp.timeout = 5000;
+	xhttp.timeout = 8000;
 	xhttp.send(); 
 }
 
@@ -44,7 +44,7 @@ uploadField.onchange = function() {
 	document.getElementById("filesubmit").style.opacity = "1";
 };
 
-var myVar2 = setInterval(loadChat, 5000);
+var myVar2 = setInterval(loadChat, 8000);
 
-var myVar = setInterval(loadOnline, 5000);
+var myVar = setInterval(loadOnline, 8000);
   

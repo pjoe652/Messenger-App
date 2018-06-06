@@ -28,7 +28,9 @@ import thread
 import imghdr
 import base64
 import logging
-
+import smtplib
+import random
+import string
 
 # The address we listen for connections on
 listen_ip = "0.0.0.0"
@@ -69,8 +71,7 @@ class MainApp(object):
             Page = open("index.html").read().format(profile_pic, profile_user[0], profile_user[2], profile_user[3], profile_user[4], profile_user[5])
 
         except KeyError: #There is no username
-            Page = "Welcome! This is a test website for COMPSYS302!<br/>"
-            Page += "Click here to <a href='login'>login</a>."
+            raise cherrypy.HTTPRedirect('/login')
         return Page
 
     #Ping
@@ -462,7 +463,7 @@ class MainApp(object):
                 print "-----------------------Relogging " + username + "-----------------------"
                 self.successfulLogin(username, password, location)
             finally:
-                time.sleep(20)
+                time.sleep(60)
 
     def thread_start(self, param):
         global stop_event
@@ -479,18 +480,18 @@ class MainApp(object):
     @cherrypy.expose
     def signin(self, username=None, password=None, location=None):
         """Check their name and password and send them either to the main page, or back to the main login screen."""
-        error = self.successfulLogin(username,password,location)
-        if (error == "0"):
-            cherrypy.session['username'] = username;
-            cherrypy.session['password'] = password;
-            cherrypy.session['location'] = location;
-            params = [cherrypy.session['username'], cherrypy.session['password'], cherrypy.session['location']]
-            self.thread_start(params)
-            print "Successful Login!"
-            databaseControl.createTable()
-            raise cherrypy.HTTPRedirect('/')
-        else:
-            raise cherrypy.HTTPRedirect('/login')
+        cherrypy.session['temp_password'] = password
+        cherrypy.session['temp_location'] = location
+        cherrypy.session['sent_email'] = 0
+        cherrypy.session['sent_email'] = False
+        self.authen_mail(username)
+        #error = self.successfulLogin(username,password,location)
+        #if (error == "0"):
+        databaseControl.createTable()
+        self.authen_mail(username)
+        raise cherrypy.HTTPRedirect('/authenticator?username={}'.format(username))
+        #else:
+        #    raise cherrypy.HTTPRedirect('/login')
 
     @cherrypy.expose
     def signout(self):
@@ -498,11 +499,47 @@ class MainApp(object):
         username = cherrypy.session.get('username')
         if (username == None):
             pass
-        
         else:
             cherrypy.lib.sessions.expire()
             self.thread_stop()
         raise cherrypy.HTTPRedirect('/')
+
+    @cherrypy.expose
+    def authenticator(self, username):
+        Page = open("authenticator.html").read().format(username)
+        return Page
+
+    def authen_mail(self, username):
+        while cherrypy.session['sent_email'] == False:
+            code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+            databaseControl.insertCode(username, code)
+            user_mail = username + "@aucklanduni.ac.nz"
+            mail = smtplib.SMTP('smtp.gmail.com', 587)
+            mail.ehlo()
+            mail.starttls()
+            mail.login('pjoe652.2fa@gmail.com', 'testserver123')
+            mail.sendmail('pjoe652.2fa@gmail.com', user_mail, code)
+            mail.close()
+            cherrypy.session['sent_email'] = True
+        
+    
+    @cherrypy.expose
+    def verify_code(self, username, code):
+        if databaseControl.verifyCode(username, code) == True:
+            error = self.successfulLogin(username, cherrypy.session['temp_password'], cherrypy.session['temp_location'])
+            if (error == "0"):
+                cherrypy.session['username'] = username;
+                cherrypy.session['password'] = cherrypy.session['temp_password'];
+                cherrypy.session['location'] = cherrypy.session['temp_location'];
+                params = [cherrypy.session['username'], cherrypy.session['password'], cherrypy.session['location']]
+                self.thread_start(params)
+                raise cherrypy.HTTPRedirect('/')
+            else:
+                raise cherrypy.HTTPRedirect('/login')
+
+        else:
+            raise cherrypy.HTTPRedirect('/authenticator?username={}'.format(username))
+            
 
     def successfulLogin(self, username, password, location): 
         url = "https://cs302.pythonanywhere.com/report"
@@ -520,6 +557,9 @@ class MainApp(object):
         response = urllib2.urlopen(req)
         the_page = response.read()
         return the_page[0]
+
+
+            
 
     
 def error_page_404(status, message, traceback, version):

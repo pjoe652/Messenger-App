@@ -20,6 +20,7 @@ def createTable():
     #Online User table
     c.execute("""CREATE TABLE IF NOT EXISTS users (
                 username TEXT,
+                code TEXT DEFAULT '',
                 UNIQUE(username)
                 )""")
         
@@ -56,6 +57,28 @@ def createTable():
         c.execute("INSERT OR IGNORE INTO users (username) VALUES ('{}')".format(user))
     conn.commit()
     conn.close()
+
+#Inserts authenticator code
+def insertCode(username, code):
+    conn = sqlite3.connect('userDatabase.db')
+    c = conn.cursor()
+
+    c.execute("UPDATE users SET code='{}' WHERE username='{}'".format(code, username))
+
+    conn.commit()
+    conn.close()
+
+def verifyCode(username, code):
+    
+    conn = sqlite3.connect('userDatabase.db')
+    c = conn.cursor()
+
+    c.execute("SELECT code FROM users WHERE username='{}'".format(username))
+    value = c.fetchone()
+    if (code == value[0]):
+        return True
+    else:
+        return False
 
 #Automatically updates users
 def updateOnlineUsers(username, password):

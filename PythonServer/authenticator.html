@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/authenticator.css">
+</head>
+<body>
+
+<div class ="authen">
+  </br>
+  <div class="imgcontainer">
+    <img src="https://image.ibb.co/huWJky/unknown.png" alt="Avatar" class="avatar">
+  </div>
+  <br><br>
+
+  <div class="container">
+	<form action="/verify_code">
+    <label for="username"><b>Authenticator</b></label><br><br>
+	<a> Please check your student email for authenticator code</a>
+	<br><br>
+    <input type="text" placeholder="Enter Code" name="code" required>
+	<input type="hidden" name="username" value="{}" required>
+
+    <button type="submit">Login</button>
+	</form>
+	
+	<form action ="/">
+		<button type="submit">Back</button>
+	</form>
+		
+  </div>
+ </div>
+
+
+</body>
+</html>
