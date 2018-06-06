@@ -159,5 +159,13 @@ t.cancel()'''
 verify = verifyCode("pjoe652", "testtest")
 print verify'''
 
-code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
-print code
+'''code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+print code'''
+
+def log_error(error):
+    timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    with open('errorlog.txt', 'a+') as log:
+        log.write(timestamp + ":" + error + "\n")
+
+log_error("hello")
+log_error("test")

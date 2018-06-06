@@ -22,5 +22,13 @@ uploadField.onchange = function() {
 	document.getElementById("profile").style.opacity = "1";
 };
 
+var uploadField = document.getElementById("file");
+uploadField.onchange = function() {
+    if(this.files[0].size > 5242880){
+       alert("File is too big!");
+       this.value = "";
+    };
+};
+
 var myVar = setInterval(loadOnline, 8000);
   

@@ -1,9 +1,9 @@
 #!/usr/bin/python
-""" cherrypy_example.py
+""" cherrypy_project.py
 
     COMPSYS302 - Software Design
-    Author: Andrew Chen (andrew.chen@auckland.ac.nz)
-    Last Edited: 19/02/2018
+    Author: Peter Joe (pjoe652@auckland.ac.nz)
+    Last Edited: 7/06/2018
 
     This program uses the CherryPy web server (from www.cherrypy.org).
 """
@@ -44,7 +44,12 @@ class MainApp(object):
     _cp_config = {'tools.encode.on': True, 
                   'tools.encode.encoding': 'utf-8',
                   'tools.sessions.on' : 'True',
-                 }                 
+                 }
+
+    def log_error(self, error):
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        with open('errorlog.txt', 'a+') as log:
+            log.write(timestamp + ":" + error + "\n")
 
     # If they try somewhere we don't know, catch it here and send them to the right place.
     @cherrypy.expose
@@ -71,6 +76,7 @@ class MainApp(object):
             Page = open("index.html").read().format(profile_pic, profile_user[0], profile_user[2], profile_user[3], profile_user[4], profile_user[5])
 
         except KeyError: #There is no username
+            self.log_error("KeyError within index")
             raise cherrypy.HTTPRedirect('/login')
         return Page
 
@@ -152,7 +158,7 @@ class MainApp(object):
                                     else:
                                         message += '<div class="chat self"><div class="user-photo"><img src="{}"></div>'.format(sender_picture)
                                         message += '<div class="chat-message"><a href="{}" download>{}</a>'.format(directory, message_log[x]['filename'])
-                                        message += '<p class="time-log"> {} </p></div></div>'.format(stamp)
+                                        message += '</div><p class="time-log"> {} </p></div>'.format(stamp)
                     else:
                         if (message_log[x]['message'] != ""):
                                     stamp = message_log[x]['sender'] + " " + message_log[x]['timestamp']
@@ -167,22 +173,22 @@ class MainApp(object):
                                     with open(local_path, 'wb') as f:
                                         f.write(filedata)
                                     if ((message_log[x]['content_type'].split("/"))[0] == "image"):
-                                        message += '<div class="chat friend"><div class="user-photo"><img src="{}"></div>'.format(sender_picture)
+                                        message += '<div class="chat friend"><div class="user-photo"><img src="{}"></div>'.format(destination_picture)
                                         message += '<img class="chat-message" src="{}">'.format(directory)
                                         message += '<p class="time-log"> {} </p></div>'.format(stamp)
                                     elif ((message_log[x]['content_type'].split("/"))[0] == "audio"):
-                                        message += '<div class="chat friend"><div class="user-photo"><img src="{}"></div>'.format(sender_picture)
+                                        message += '<div class="chat friend"><div class="user-photo"><img src="{}"></div>'.format(destination_picture)
                                         message += '<div class="chat-message"><audio controls><source src="{}" type="{}">'.format(directory, message_log[x]['content_type'])
                                         message += '</audio></div><p class="time-log"> {} </p></div>'.format(stamp)
                                     elif ((message_log[x]['content_type'].split("/"))[0] == "video"):
-                                        message += '<div class="chat friend"><div class="user-photo"><img src="{}"></div>'.format(sender_picture)
+                                        message += '<div class="chat friend"><div class="user-photo"><img src="{}"></div>'.format(destination_picture)
                                         message += '<div class="chat-message"><video width="340px" controls>'
                                         message += '<source src="{}" type="{}">'.format(directory, message_log[x]['content_type'])
                                         message += '</video></div><p class="time-log"> {} </p></div>'.format(stamp)
                                     else:
-                                        message += '<div class="chat friend"><div class="user-photo"><img src="{}"></div>'.format(sender_picture)
+                                        message += '<div class="chat friend"><div class="user-photo"><img src="{}"></div>'.format(destination_picture)
                                         message += '<div class="chat-message"><a href="{}" download>{}</a>'.format(directory, message_log[x]['filename'])
-                                        message += '<p class="time-log"> {} </p></div>'.format(stamp)
+                                        message += '</div><p class="time-log"> {} </p></div>'.format(stamp)
                                                     
 
         message_dict = {"data" : message}
@@ -208,8 +214,12 @@ class MainApp(object):
                                                       profile_user[5], destination, destination)
             return Page
         except KeyError:
-            logging.exception("Must be logged in to view profiles")
+            self.log_error("KeyError within profile")
             raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within profile")
+            raise cherrypy.HTTPRedirect('/')
+            
 
     @cherrypy.expose
     def getProfileInfo(self, destination):
@@ -217,6 +227,10 @@ class MainApp(object):
             databaseControl.updateUserProfile(destination, cherrypy.session['username'])
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except urllib2.URLError, e:
+            self.log_error("URLError within getProfileInfo")
+            raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
+        except:
+            self.log_error("Error within getProfileInfo")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         
 
@@ -234,8 +248,12 @@ class MainApp(object):
             Page = open("editProfile.html").read().format(profile_pic,profile_user[0], profile_user[2], profile_user[3], profile_user[4], profile_user[5])
             return Page
         except KeyError:
-            logging.exception("Must be logged in to edit your profile")
+            self.log_error("Error within editProfilePage")
             raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within editProfilePage")
+            raise cherrypy.HTTPRedirect('/')
+        
 
     #Saves new profile details on database
     @cherrypy.expose
@@ -247,7 +265,10 @@ class MainApp(object):
             databaseControl.updateProfileDetails(cherrypy.session['username'], last_updated, name, position, description, location)
             raise cherrypy.HTTPRedirect('/')
         except KeyError:
-            logging.exception("Must be logged in to edit your profile")
+            self.log_error("KeyError within editProfileDetails")
+            raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within editProfileDetails")
             raise cherrypy.HTTPRedirect('/')
 
     #Saves static image locally and saves path onto database
@@ -268,7 +289,10 @@ class MainApp(object):
                 databaseControl.updateProfilePicture(username, last_updated, directory)
                 raise cherrypy.HTTPRedirect('/')
         except KeyError:
-            logging.exception("Must be logged in to edit your profile")
+            self.log_error("KeyError within editProfilePicture")
+            raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within editProfilePicture")
             raise cherrypy.HTTPRedirect('/')
         
 
@@ -286,8 +310,11 @@ class MainApp(object):
             profile_dict = json.dumps(profile_dict)
             return profile_dict
         except AttributeError:
-            logging.exception("Request requires a JSON")
+            self.log_error("AttributeError within editProfilePage")
+        except:
+            self.log_error("Error within editProfilePage")
             raise cherrypy.HTTPRedirect('/')
+        
 
         
             
@@ -310,20 +337,20 @@ class MainApp(object):
             databaseControl.updateNewMessages(sender, destination, message, stamp)
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except urllib2.URLError, e:
-            checksLogger.error('URLError = ' + str(e.reason))
+            self.log_error("urllib2.URLError within prepMessages")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except urllib2.HTTPError, e:
-            checksLogger.error('HTTPError = ' + str(e.code))
-            raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
-        except httplib.HTTPexception, e:
-            checksLogger.error('HTTPException')
+            self.log_error("urllib2.HTTPError within prepMessages")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except TypeError:
-            logging.exception("A TypeError has occured")
+            self.log_error("TypeError within prepMessages")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except KeyError:
-            logging.exception("User must be logged into access this page")
+            self.log_error("KeyError within prepMessages")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
+        except:
+            self.log_error("Error within prepMessages")
+            raise cherrypy.HTTPRedirect('/')
 
     # Prepares files to be sent as JSON
     @cherrypy.expose
@@ -357,20 +384,20 @@ class MainApp(object):
             databaseControl.updateNewFile(sender, destination, base64_file, file_name, content_type, stamp)
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except urllib2.URLError, e:
-            checksLogger.error('URLError = ' + str(e.reason))
+            self.log_error("urllib2.URLError within prepFiles")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except urllib2.HTTPError, e:
-            checksLogger.error('HTTPError = ' + str(e.code))
-            raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
-        except httplib.HTTPexception, e:
-            checksLogger.error('HTTPException')
+            self.log_error("urllib2.HTTPError within prepFiles")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except TypeError:
-            logging.exception("A TypeError has occured")
+            self.log_error("TypeError within prepFiles")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
         except KeyError:
-            logging.exception("User must be logged into access this page")
+            self.log_error("KeyError within prepFiles")
             raise cherrypy.HTTPRedirect('/profile?destination={}'.format(destination))
+        except:
+            self.log_error("Error within prepFiles")
+            raise cherrypy.HTTPRedirect('/')
         
     @cherrypy.expose
     @cherrypy.tools.json_in() 
@@ -381,13 +408,13 @@ class MainApp(object):
             databaseControl.updateNewMessages(messages['sender'], messages['destination'], messages['message'], messages['stamp'])
             return "0"
         except AttributeError:
-            logging.exception("Request requires a JSON")
+            self.log_error("AttributeError within receiveMessage")
             raise cherrypy.HTTPRedirect('/')
         except urllib2.HTTPError:
-            logging.exception("HTTP Error has occured")
+            self.log_error("HTTPError within receiveMessage")
             raise cherrypy.HTTPRedirect('/')
-        except Exception:
-            logging.exception("Could not reach page")
+        except:
+            self.log_error("Error within receiveMessage")
             raise cherrypy.HTTPRedirect('/')
             
     
@@ -399,10 +426,13 @@ class MainApp(object):
             databaseControl.updateNewFile(files['sender'], files['destination'], files['file'], files['filename'], files['content_type'], files['stamp'])
             return "0"
         except AttributeError:
-            logging.exception("Request requires a JSON")
+            self.log_error("AttributeError within receiveFile")
             raise cherrypy.HTTPRedirect('/')
-        except Exception:
-            logging.exception("Could not reach page")
+        except urllib2.HTTPError:
+            self.log_error("HTTPError within receiveFile")
+            raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within receiveFile")
             raise cherrypy.HTTPRedirect('/')
     
     @cherrypy.expose
@@ -422,7 +452,10 @@ class MainApp(object):
             f.close()
             return data
         except IOError:
-            logging.exception("There such item or direction")
+            self.log_error("IOError within css")
+            raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within css")
             raise cherrypy.HTTPRedirect('/')
 
     #Returns Javascript object
@@ -437,7 +470,10 @@ class MainApp(object):
             f.close()
             return data
         except IOError:
-            logging.exception("There such item or direction")
+            self.log_error("IOError within js")
+            raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within js")
             raise cherrypy.HTTPRedirect('/')
 
     #Returns Image
@@ -452,7 +488,10 @@ class MainApp(object):
             f.close()
             return data
         except IOError:
-            logging.exception("There such item or direction")
+            self.log_error("IOError within img")
+            raise cherrypy.HTTPRedirect('/')
+        except:
+            self.log_error("Error within img")
             raise cherrypy.HTTPRedirect('/')
 
     '''This section operates the continuous login'''
@@ -493,6 +532,7 @@ class MainApp(object):
         #else:
         #    raise cherrypy.HTTPRedirect('/login')
 
+    #Signs out user and stops auto relogging
     @cherrypy.expose
     def signout(self):
         """Logs the current user out, expires their session"""
@@ -504,11 +544,13 @@ class MainApp(object):
             self.thread_stop()
         raise cherrypy.HTTPRedirect('/')
 
+    #Returns authenticator page after login
     @cherrypy.expose
     def authenticator(self, username):
         Page = open("authenticator.html").read().format(username)
         return Page
-
+    
+    #Sends authentication mail to user
     def authen_mail(self, username):
         while cherrypy.session['sent_email'] == False:
             code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
@@ -522,7 +564,7 @@ class MainApp(object):
             mail.close()
             cherrypy.session['sent_email'] = True
         
-    
+    #Compares input code with code in database
     @cherrypy.expose
     def verify_code(self, username, code):
         if databaseControl.verifyCode(username, code) == True:
@@ -540,7 +582,7 @@ class MainApp(object):
         else:
             raise cherrypy.HTTPRedirect('/authenticator?username={}'.format(username))
             
-
+    #Connects to the Login Server to report user has logged in
     def successfulLogin(self, username, password, location): 
         url = "https://cs302.pythonanywhere.com/report"
         encrypt = hashlib.sha256(str(password) + str(username))
@@ -561,13 +603,13 @@ class MainApp(object):
 
             
 
-    
+# Returns a 404 page when a function with unknown parameters is called
 def error_page_404(status, message, traceback, version):
-    logging.exception("Could not access requested page")
-    return "Error 404 - The page you're looking for doesn't exist"
-
-
-
+    timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    with open('errorlog.txt', 'a+') as log:
+        log.write(timestamp + ":" + "404 Error has occured" + "\n")
+    Page = open('404.html')
+    return Page
 
 def runMainApp():
     # Create an instance of MainApp and tell Cherrypy to send all requests under / to it. (ie all of them)
